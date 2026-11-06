@@ -1,0 +1,91 @@
+<app-header></app-header>
+
+
+<main class='container'>
+
+    <input id="search" type="text" class="form-control" placeholder="Search" aria-label="Search" [value]="query()"
+        (input)="query.set($any($event.target).value)" />
+
+    <div class="mt-2 container">
+
+    </div>
+
+    <div class="d-md-flex w-100 my-4">
+        <!-- Main content: 70% width on desktop, 100% on mobile -->
+        <div style="flex: 0 0 70%;" class="container">
+            <div class="d-flex flex-wrap overflow-hidden gap-2">
+                @for(wf of filtered(); track wf.id){
+                <div style="max-width: 400px;">
+                    <!-- Bootstrap Card Component -->
+                    <div class="card custom-card p-3 position-relative bg-white">
+    
+                        <div class="card-body p-0">
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="icon-box me-3">
+                                    <i class="bi bi-diagram-3-fill"></i>
+                                </div>
+    
+                                <!-- Card Details -->
+                                <div class="pe-4">
+                                    <h5 class="card-title fw-bold text-dark mb-1 fs-6">{{wf?.name}}</h5>
+                                    <p class="card-text text-secondary mb-1 small">{{wf?.nodes?.length ?? '0'}} nodes</p>
+                                    <p class="card-text text-muted" style="font-size: 0.75rem;">Last modified: {{wf?.updatedAt | date}}
+                                    </p>
+                                </div>
+                            </div>
+    
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="button"
+                                    class="btn btn-primary btn-sm px-4 py-2 rounded-2 fw-medium flex-fill">Open</button>
+                                <button type="button"
+                                    class="btn btn-danger-custom btn-sm px-4 py-2 rounded-2 fw-medium flex-fill"
+                                    (click)="remove(wf.id)"
+                                    >Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                }
+                @empty {
+                <div class="text-center ">
+                    No Data Found
+                </div>
+    
+                }
+            </div>
+        </div>
+
+        <!-- Sidebar: 30% width on desktop, 100% on mobile -->
+        <div style="flex: 0 0 30%;" class="bg-light text-dark p-3 border rounded">
+            <h6>Create New Workflow</h6>
+            <div class="form-group">
+                <label for="wf-name" class="col-form-label">Name </label>
+                <input type="text" [formControl]="name" class="form-control" id="wf-name">
+                <div>
+                    @if(name.touched){
+                    @if(name.hasError('required')){
+                    <div class="text-danger">
+                        Name is required
+                    </div>
+                    }
+                    @if(name.hasError('maxlength')){
+                    <div class="text-danger">
+                        Name must be less than 60 characters
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+            <div class="mt-3 text-center gap-2 d-flex">
+                <button class="btn btn-primary btn-sm px-4 py-2 rounded-2 fw-medium flex-fill"
+                    (click)="create()">Create</button>
+                <button class="btn btn-warning btn-sm px-4 py-2 rounded-2 fw-medium flex-fill"
+                    (click)="reset()">Reset</button>
+            </div>
+
+        </div>
+    </div>
+
+
+</main>

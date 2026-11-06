@@ -1,0 +1,72 @@
+  <div class="top">
+      <a [routerLink]="['/editor', wf().id]">← Back to editor</a>
+      <h1>Execution Monitor: {{ wf().name }}</h1>
+      <span class="badge" [ngClass]="ex.status()">{{ ex.status() }}</span>
+      <button class="danger" [disabled]="ex.status() !== 'running'" (click)="ex.cancel()">
+        Cancel
+      </button>
+    </div>
+
+    <section class="inputs">
+      <label>Test case preset
+        <select (change)="applyPreset($any($event.target).value)">
+          <option value="">Custom</option>
+          @for (t of presets; track t.name; let i = $index) {
+            <option [value]="i">{{ t.name }}</option>
+          }
+        </select>
+      </label>
+      @if (expectation()) {
+        <p class="hint">Expected: {{ expectation() }}</p>
+      }
+      <label>Input (JSON)
+        <textarea rows="4" [(ngModel)]="inputText"></textarea>
+      </label>
+      @if (inputError()) {
+        <div class="err">{{ inputError() }}</div>
+      }
+      <button class="primary" [disabled]="ex.status() === 'running'" (click)="run()">Run ▶</button>
+    </section>
+
+    <section class="cols">
+      <div>
+        <h3>Nodes</h3>
+        <table>
+          <thead>
+            <tr><th>Node</th><th>Type</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            @for (n of wf().nodes; track n.id) {
+              <tr [class.current]="ex.currentId() === n.id">
+                <td>{{ n.label }}</td>
+                <td>{{ n.type }}</td>
+                <td><span class="chip" [ngClass]="status(n.id)">{{ status(n.id) }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <h3>Execution path</h3>
+        <div class="path">
+          @for (id of ex.path(); track $index; let last = $last) {
+            <span class="chip" [ngClass]="status(id)" [class.current]="ex.currentId() === id">{{
+              label(id)
+            }}</span>
+            @if (!last) { → }
+          }
+        </div>
+      </div>
+
+      <div>
+        <h3>Execution logs <button (click)="clearLogs()">Clear</button></h3>
+        <div class="logs">
+          @for (l of ex.logs(); track $index) {
+            <div [ngClass]="l.level">{{ l.time }} {{ l.message }}</div>
+          }
+        </div>
+        <h3>Execution result</h3>
+        <div class="result">
+          <div>Status: <b>{{ ex.status() }}</b></div>
+          <pre>{{ ex.variables() | json }}</pre>
+        </div>
+      </div>
+    </section>

@@ -1,0 +1,133 @@
+<app-header [title]="wf().name" [showBack]="true" [isButtons]="true" (ButtonClick)="handleAllClicks($event)"
+    [buttons]="[{ name: 'Validate' }, { name: 'Save', onClick: save }, { name: 'Run ▶', onClick: run }]"></app-header>
+
+@if (messages().length) {
+<div class="msgs" [class.ok]="valid()">
+    @for (m of messages(); track m) {
+    <div>{{ m }}</div>
+    }
+</div>
+}
+
+<div class="layout">
+    <aside class="palette">
+        <h3>Nodes</h3>
+        @for (t of paletteTypes; track t) {
+        <div class="pal-item" [class]="'pal-item ' + t" draggable="true" (dragstart)="onPaletteDrag($event, t)">
+            {{ t }}
+        </div>
+        }
+        <p class="hint">
+            Drag onto the canvas. Click an output port (bottom), then an input port (top) to connect.
+            Click an arrow to remove it.
+        </p>
+    </aside>
+
+    <main #canvas class="canvas" (dragover)="$event.preventDefault()" (drop)="onDrop($event, canvas)"
+        (click)="clearSelection()">
+        <div class="surface">
+            <svg class="edges" width="1600" height="1000">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+                        orient="auto">
+                        <path d="M0 0 L10 5 L0 10 z" fill="#64748b" />
+                    </marker>
+                </defs>
+                @for (e of edgeViews(); track e.id) {
+                <path class="edge" [attr.d]="e.d" marker-end="url(#arrow)"
+                    (click)="removeEdge(e.id); $event.stopPropagation()" />
+                @if (e.label) {
+                <text class="edge-label" [attr.x]="e.lx" [attr.y]="e.ly">{{ e.label }}</text>
+                }
+                }
+            </svg>
+
+            @for (n of wf().nodes; track n.id) {
+            <div class="node" [class]="'node ' + n.type" [class.selected]="n.id === selectedId()" [style.left.px]="n.x"
+                [style.top.px]="n.y" [style.width.px]="W" [style.height.px]="H" (pointerdown)="startDrag($event, n)"
+                (click)="select($event, n)">
+                <span>{{ n.label }}</span>
+
+                @if (n.type !== 'start') {
+                <i class="port in" [class.armed]="!!pending()" (pointerdown)="$event.stopPropagation()"
+                    (click)="completeConnect($event, n)"></i>
+                }
+                @if (n.type === 'condition') {
+                <i class="port out t" title="true" (pointerdown)="$event.stopPropagation()"
+                    (click)="beginConnect($event, n, 'true')"></i>
+                <i class="port out f" title="false" (pointerdown)="$event.stopPropagation()"
+                    (click)="beginConnect($event, n, 'false')"></i>
+                } @else if (n.type !== 'end') {
+                <i class="port out" (pointerdown)="$event.stopPropagation()" (click)="beginConnect($event, n)"></i>
+                }
+            </div>
+            }
+        </div>
+    </main>
+
+    <aside class="props">
+        <h3>Properties</h3>
+        @if (selected(); as n) {
+        <label>Label
+            <input [ngModel]="n.label" (ngModelChange)="patchNode({ label: $event })" />
+        </label>
+
+        @switch (n.type) {
+        @case ('action') {
+        <label>Action type
+            <select [ngModel]="n.config.actionType" (ngModelChange)="patchConfig({ actionType: $event })">
+                <option value="setVariable">Set variable</option>
+                <option value="add">Add number</option>
+                <option value="multiply">Multiply number</option>
+                <option value="log">Log message</option>
+            </select>
+        </label>
+        @if (n.config.actionType === 'log') {
+        <label>Message (wrap a variable in double curly braces to insert it)
+            <input [ngModel]="n.config.message" (ngModelChange)="patchConfig({ message: $event })" />
+        </label>
+        } @else {
+        <label>Variable
+            <input [ngModel]="n.config.variable" (ngModelChange)="patchConfig({ variable: $event })" />
+        </label>
+        <label>Value
+            <input [ngModel]="n.config.value" (ngModelChange)="patchConfig({ value: $event })" />
+        </label>
+        }
+        }
+        @case ('condition') {
+        <label>Variable
+            <input [ngModel]="n.config.field" (ngModelChange)="patchConfig({ field: $event })" />
+        </label>
+        <label>Operator
+            <select [ngModel]="n.config.operator ?? '=='" (ngModelChange)="patchConfig({ operator: $event })">
+                @for (op of operators; track op) {
+                <option [value]="op">{{ op }}</option>
+                }
+            </select>
+        </label>
+        <label>Compare value
+            <input [ngModel]="n.config.value" (ngModelChange)="patchConfig({ value: $event })" />
+        </label>
+        <label>True label
+            <input [ngModel]="n.config.trueLabel" (ngModelChange)="patchConfig({ trueLabel: $event })" />
+        </label>
+        <label>False label
+            <input [ngModel]="n.config.falseLabel" (ngModelChange)="patchConfig({ falseLabel: $event })" />
+        </label>
+        }
+        @case ('delay') {
+        <label>Delay (ms, {{ DELAY_MIN }}–{{ DELAY_MAX }})
+            <input type="number" [min]="DELAY_MIN" [max]="DELAY_MAX" [ngModel]="n.config.delayMs"
+                (ngModelChange)="patchConfig({ delayMs: +$event })" />
+        </label>
+        }
+        }
+        @if (n.type !== 'start') {
+        <button class="danger" (click)="deleteNode(n.id)">Delete node</button>
+        }
+        } @else {
+        <p class="hint">Select a node to edit it.</p>
+        }
+    </aside>
+</div>

@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    @if(showBack()) {
+      
+      <a class="btn btn-link" routerLink="/">←</a>
+    }
+    <!-- Brand/Logo --> 
+    <a class="navbar-brand fw-bold" >{{title()}}</a>
+
+    <!-- Mobile Toggle Button -->
+    <button class="navbar-brand navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navigation Links -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+        @if (isButtons()) {
+        @for(btn of buttons(); track btn) {
+          <li class="nav-item p-1">
+            <button (click)="onClick(btn?.name)" class="btn btn-primary"> {{btn.name}}</button>
+          </li>
+          }
+        }
+      </ul>
+    </div>
+  </div>
+</nav>
